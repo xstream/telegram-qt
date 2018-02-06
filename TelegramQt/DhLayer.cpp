@@ -25,7 +25,7 @@
 #include <QDateTime>
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(c_baseDhLayerCategory, "telegram.base.dhlayer", QtWarningMsg)
+Q_LOGGING_CATEGORY(c_baseDhLayerCategory, "telegram.base.dhlayer", QtDebugMsg)
 
 namespace Telegram {
 

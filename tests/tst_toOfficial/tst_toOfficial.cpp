@@ -86,6 +86,17 @@ protected:
     CTelegramTransport *m_transport;
 };
 
+class TestDhLayer : public Client::DhLayer
+{
+    Q_OBJECT
+public:
+    void init() override
+    {
+        m_authRetryId = 0;
+        Utils::randomBytes(m_clientNonce.data, m_clientNonce.size());
+    }
+};
+
 tst_toOfficial::tst_toOfficial(QObject *parent) :
     QObject(parent)
 {
@@ -100,7 +111,7 @@ void tst_toOfficial::testClientDhLayer()
     Client::TcpTransport *transport = new Client::TcpTransport(this);
 
     TestSendPackageHelper *sendHelper = new TestSendPackageHelper(transport);
-    Client::DhLayer *dhLayer = new Client::DhLayer(this);
+    Client::DhLayer *dhLayer = new TestDhLayer();
     dhLayer->setSendPackageHelper(sendHelper);
     dhLayer->setServerRsaKey(Utils::loadHardcodedKey());
 
