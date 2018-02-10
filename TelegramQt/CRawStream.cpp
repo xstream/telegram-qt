@@ -20,6 +20,7 @@
 
 #include <QIODevice>
 #include <QBuffer>
+#include <QLoggingCategory>
 
 static const char s_nulls[4] = { 0, 0, 0, 0 };
 
@@ -113,6 +114,7 @@ bool CRawStream::read(void *data, qint64 size)
     if (size) {
         m_error = m_error || m_device->read((char *) data, size) != size;
     }
+    qDebug() << "read" << size << "bytes, " << m_device->bytesAvailable() << "available";
     return m_error;
 }
 
