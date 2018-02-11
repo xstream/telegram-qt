@@ -34,6 +34,7 @@ public:
 
     PendingOperation *connectToServer();
     PendingAuthOperation *signIn();
+    PendingOperation *getDcConfig();
 
     Connection *createConnection(const TLDcOption &dcInfo);
     Connection *mainConnection();
@@ -48,8 +49,12 @@ public:
     Connection *m_mainConnection = nullptr;
 
     PendingAuthOperation *m_authOperation = nullptr;
+    PendingOperation *m_getDcConfigOperation = nullptr;
 
     bool m_signedIn = false;
+
+protected Q_SLOTS:
+    void onConnectOperationFinished(PendingOperation *operation);
 };
 
 } // Client namespace

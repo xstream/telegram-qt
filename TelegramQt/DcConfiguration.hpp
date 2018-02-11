@@ -7,9 +7,12 @@
 
 namespace Telegram {
 
-struct DcConfiguration
+class DcConfiguration
 {
+public:
     QVector<DcOption> dcOptions;
+
+    bool isValid() const { return !dcOptions.isEmpty(); }
 };
 
 } // Telegram
