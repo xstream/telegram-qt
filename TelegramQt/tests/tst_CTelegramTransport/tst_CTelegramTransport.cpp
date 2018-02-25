@@ -19,6 +19,9 @@
 
 #include "CTelegramTransport.hpp"
 #include "TelegramUtils.hpp"
+#include "CTcpTransport.hpp"
+#include "CClientTcpTransport.hpp"
+#include "Utils.hpp"
 
 #include <QTest>
 #include <QDebug>
@@ -44,6 +47,15 @@ protected:
     {
         Q_UNUSED(package)
     }
+
+    qint64 write(const char *data, qint64 len) { Q_UNUSED(data); return len; }
+};
+
+class TestTcpTransport : public Telegram::Client::TcpTransport
+{
+    Q_OBJECT
+public:
+    using TcpTransport::setCryptoKeysSourceData;
 };
 
 class tst_CTelegramTransport : public QObject
@@ -55,6 +67,8 @@ public:
 private slots:
     void testNewMessageId();
     void testNewMessageIdExtra();
+
+    void tcpTransportObfuscated();
 
 };
 
@@ -121,6 +135,22 @@ void tst_CTelegramTransport::testNewMessageIdExtra()
         QCOMPARE(newTimeStamp, expectedTimeStamp.at(i));
         previousTS = newTimeStamp;
     }
+}
+
+void tst_CTelegramTransport::tcpTransportObfuscated()
+{
+    const QByteArray nonce = QByteArray::fromHex(QByteArrayLiteral("c6c021e092aff8f9452114b9fbd4a919"
+                                                                   "a27a256821dd1e7213c562f26f94883c"
+                                                                   "4c7449b74fc8fb96d4c0727f2043d69f"
+                                                                   "cc94eb639cc9486aefefefef39175b65"));
+
+    const QByteArray source = nonce.mid(8, 48);
+    TestTcpTransport transport;
+    transport.setCryptoKeysSourceData(source, CTcpTransport::DirectIsWriteReversedIsRead);
+
+//    QByteArray encrypted = Telegram::Utils::aesEncrypt(nonce, transport.getEncryptionAesKey());
+
+//    qDebug() << "Encrypted nonce:" << encrypted.toHex();
 }
 
 QTEST_MAIN(tst_CTelegramTransport)

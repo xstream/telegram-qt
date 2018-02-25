@@ -10,6 +10,8 @@
 #include <QDateTime>
 #include <QLoggingCategory>
 
+Q_LOGGING_CATEGORY(loggingCategoryRemoteClientConnection, "telegram.server.remoteclient.connection", QtDebugMsg)
+
 namespace Telegram {
 
 namespace Server {
@@ -32,7 +34,7 @@ public:
         } else if (mode == SendMode::ServerInitiative) {
             ts |= 3;
         } else {
-            qWarning() << Q_FUNC_INFO << "Invalid mode";
+            qCWarning(loggingCategoryRemoteClientConnection) << Q_FUNC_INFO << "Invalid mode";
         }
         return m_connection->transport()->getNewMessageId(ts);
     }

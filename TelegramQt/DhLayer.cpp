@@ -25,7 +25,7 @@
 #include <QDateTime>
 #include <QLoggingCategory>
 
-Q_LOGGING_CATEGORY(c_baseDhLayerCategory, "telegram.base.dhlayer", QtWarningMsg)
+Q_LOGGING_CATEGORY(c_baseDhLayerCategory, "telegram.base.dhlayer", QtDebugMsg)
 
 namespace Telegram {
 
@@ -104,8 +104,23 @@ quint64 BaseDhLayer::sendPlainPackage(const QByteArray &payload, SendMode mode)
     outputStream << messageLength;
     outputStream << payload;
 
-    qCDebug(c_baseDhLayerCategory) << Q_FUNC_INFO << output.mid(0, 8).toHex() << output.mid(8).toHex();
+    // 0a // length
+    // 00 00 00 00 00 00 00 00 // Auth key
+    // 00 00 00 00 20 cc 7a 5a // Message (Timestamp) // Unix timestamp: 5A 7A CE E8
+    // 14 00 00 00 // Request size in bytes, 20
+    // 78 97 46 60 // ReqPq
+    // 54 9f cc f2 d5 bf 13 ba c0 8c a4 b1 a4 45 8e 19 // nonce128
 
+    // 00 00 00 00 00 00 00 00
+    // 64 e9 26 11 31 13 80 5a
+    // 14 00 00 00
+    // 78 97 46 60
+    // 26 5a e1 2a ed 68 86 55 3b 86 64 57 23 cf 6c 1a
+
+    qCDebug(c_baseDhLayerCategory) << Q_FUNC_INFO << output.mid(0, 8).toHex() << output.mid(8).toHex();
+#ifdef DEVELOPER_BUILD
+    qCDebug(c_baseDhLayerCategory) << Q_FUNC_INFO << "payload:" << TLValue::firstFromArray(payload);
+#endif
     m_sendHelper->sendPackage(output);
     return messageId;
 }

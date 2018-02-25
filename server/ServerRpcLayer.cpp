@@ -163,6 +163,7 @@ bool RpcLayer::sendRpcReply(const QByteArray &reply, quint64 messageId)
 
 bool RpcLayer::processDecryptedPackage(const QByteArray &decryptedData)
 {
+    qDebug() << Q_FUNC_INFO << "data:" << decryptedData.toHex();
     CRawStream decryptedStream(decryptedData);
     quint64 serverSalt = 0;
     quint64 sessionId = 0;

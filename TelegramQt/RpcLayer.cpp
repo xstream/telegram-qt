@@ -41,13 +41,16 @@ void BaseRpcLayer::setSendPackageHelper(BaseSendPackageHelper *helper)
     m_sendHelper = helper;
 }
 
+#define BASE_RPC_IO_DEBUG
+
 bool BaseRpcLayer::processPackage(const QByteArray &package)
 {
     if (package.size() < 24) {
         return false;
     }
 #ifdef BASE_RPC_IO_DEBUG
-    qDebug() << "Read" << package.length() << "bytes";
+    qDebug() << Q_FUNC_INFO << "Read" << package.length() << "bytes:";
+    qDebug() << package.toHex();
 #endif
     const quint64 *authKeyIdBytes = reinterpret_cast<const quint64*>(package.constData());
     const quint64 authKeyId = *authKeyIdBytes;
@@ -67,12 +70,14 @@ bool BaseRpcLayer::processPackage(const QByteArray &package)
     }
     // Encrypted Message
     const QByteArray messageKey = package.mid(8, 16);
-#ifdef BASE_RPC_IO_DEBUG
-    qWarning() << "key:" << messageKey.toHex();
-#endif
     const QByteArray data = package.mid(24);
     const SAesKey key = getDecryptionAesKey(messageKey);
     const QByteArray decryptedData = Utils::aesDecrypt(data, key).left(data.length());
+#ifdef BASE_RPC_IO_DEBUG
+    qWarning() << "messageKey:" << messageKey.toHex();
+    qWarning() << "data:" << data.toHex();
+    qWarning() << "decryptedData:" << decryptedData.toHex();
+#endif
     return processDecryptedPackage(decryptedData);
 }
 
@@ -115,19 +120,25 @@ quint64 BaseRpcLayer::sendPackage(const QByteArray &buffer, SendMode mode)
         stream << contentLength;
         stream << buffer;
         quint32 packageLength = stream.getData().length();
-        if ((packageLength) % 16) {
-            QByteArray randomPadding;
-            randomPadding.resize(16 - (packageLength % 16));
+        const quint32 padding = AbridgedLength::paddingForAlignment(16, packageLength);
+        if (padding) {
+            QByteArray randomPadding(padding, Qt::Uninitialized);
             Utils::randomBytes(&randomPadding);
-            packageLength += randomPadding.size();
             stream << randomPadding;
+            packageLength += padding;
         }
-        messageKey = Utils::sha1(stream.getData()).mid(4);
+
+        QByteArray data = stream.getData();
+
+        // MTProto2
+        const QByteArray keyPart = m_sendHelper->authKey().mid(88, 32);
+        messageKey = Utils::sha256(keyPart + data).mid(8, 16);
         const SAesKey key = getEncryptionAesKey(messageKey);
-        encryptedPackage = Utils::aesEncrypt(stream.getData(), key).left(packageLength);
+        encryptedPackage = Utils::aesEncrypt(data, key).left(packageLength);
     }
+
     CRawStream output(CRawStream::WriteOnly);
-    output << m_sendHelper->authId();
+    output << m_sendHelper->authId(); // keyId
     output << messageKey;
     output << encryptedPackage;
     m_sendHelper->sendPackage(output.getData());

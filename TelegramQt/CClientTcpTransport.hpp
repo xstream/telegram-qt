@@ -30,6 +30,8 @@ class TcpTransport : public CTcpTransport
 public:
     explicit TcpTransport(QObject *parent = nullptr);
 
+    void initObfucsation();
+    void initAbridgedVersion();
     bool setProxy(const QNetworkProxy &proxy);
 
 protected:
